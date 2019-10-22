@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "GeMuKi-Chatbot",
-    "slug": "chatbot-client-new",
+    "slug": "chatbot-client",
     "privacy": "public",
     "sdkVersion": "35.0.0",
     "platforms": [
