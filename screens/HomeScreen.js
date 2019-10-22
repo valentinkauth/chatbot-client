@@ -1,6 +1,7 @@
 import React from "react";
-import { GiftedChat } from "react-native-gifted-chat";
-import io from "socket.io-client";
+import { AsyncStorage, View } from 'react-native';
+import { GiftedChat, Bubble } from "react-native-gifted-chat";
+import * as Animatable from 'react-native-animatable';
 
 class Homescreen extends React.Component {
   constructor(props) {
@@ -26,6 +27,23 @@ class Homescreen extends React.Component {
     this.addMessage = this.addMessage.bind(this);
     this.thisistest = this.thisistest.bind(this);
   }
+
+  // Handle storage stuff
+  async componentWillMount() {
+    // try {
+    //   const value = await AsyncStorage.getItem('messages');
+    //   if (value !== null) {
+    //     // We have data!!
+    //     console.log("Data from storage " + value);
+
+    //     // Set stored messages
+    //     await this.setState({ messages: value });
+    //   }
+    // } catch (error) {
+    //   console.log("Storage Error:" + error)
+    // }
+  };
+  
 
   async componentDidMount() {
     websocket = new WebSocket(this.state.websocket_url);
@@ -156,15 +174,34 @@ class Homescreen extends React.Component {
   };
 
   // Add one or multiple messages in gifted chat format to state
-  addMessage = messages => {
+  addMessage = async(messages) => {
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages)
     }));
+
+    // try {
+    //   await AsyncStorage.setItem('messages', this.state.messages);
+    // } catch (error) {
+    //   // Error saving data
+    // }
   };
 
   thisistest(data) {
     console.log("This is a test!!" + JSON.stringify(data));
   }
+
+  renderBubble = props => {
+    // Alternative 1: animation="bounceIn" duration={800}
+    // Alternative 2: animation="bounceInUp" duration={800}
+    return ( 
+      <Animatable.View animation="fadeInUp" duration={300} iterationDelay={200}> 
+           <Bubble
+                    {...props}
+                />
+      </Animatable.View>
+    );
+
+}
 
   render() {
     return (
@@ -175,6 +212,8 @@ class Homescreen extends React.Component {
           _id: this.state.user_id
         }}
         onQuickReply={data => this.onSendQuickReply(data)}
+        renderBubble={this.renderBubble}
+        placeholder={"Nachricht eingeben..."}
       />
     );
   }

@@ -1,13 +1,13 @@
 import React from "react";
 
-class SettingsScreen extends React.Component {
+class DataScreen extends React.Component {
     render() {
       return (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text>Settings Screen</Text>
+          <Text>Data Charts Screen</Text>
         </View>
       );
     }
   }
 
-  export default SettingsScreen;
+  export default DataScreen;
