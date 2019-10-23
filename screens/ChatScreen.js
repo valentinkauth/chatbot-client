@@ -1,9 +1,26 @@
 import React from "react";
-import { AsyncStorage, View } from 'react-native';
-import { GiftedChat, Bubble } from "react-native-gifted-chat";
-import * as Animatable from 'react-native-animatable';
+import { AsyncStorage, View, Text, Image, Button } from "react-native";
+import { GiftedChat, Bubble, Send } from "react-native-gifted-chat";
+import * as Animatable from "react-native-animatable";
+import LogoTitle from "../components/header/LogoTitle";
+import DataTitle from "../components/header/DataTitle";
+import ProfileTitle from "../components/header/ProfileTitle";
 
-class Homescreen extends React.Component {
+class ChatScreen extends React.Component {
+  static navigationOptions = ({ navigation }) => {
+    return {
+      headerTitle: () => (
+        <LogoTitle onPress={() => alert("Hi, I am the GeMuKi Bot!")} />
+      ),
+      headerRight: () => (
+        <DataTitle onPress={() => navigation.navigate("Data")} />
+      ),
+      headerLeft: () => (
+        <ProfileTitle onPress={() => navigation.navigate("Settings")}/>
+      ),
+    };
+  };
+
   constructor(props) {
     super(props);
 
@@ -35,15 +52,13 @@ class Homescreen extends React.Component {
     //   if (value !== null) {
     //     // We have data!!
     //     console.log("Data from storage " + value);
-
     //     // Set stored messages
     //     await this.setState({ messages: value });
     //   }
     // } catch (error) {
     //   console.log("Storage Error:" + error)
     // }
-  };
-  
+  }
 
   async componentDidMount() {
     websocket = new WebSocket(this.state.websocket_url);
@@ -91,11 +106,10 @@ class Homescreen extends React.Component {
   }
 
   onSend(messages = []) {
-
     // Create and send botkit message to server
     var botkitMessage = this.createBotKitMessage(messages[0].text);
     websocket.send(JSON.stringify(botkitMessage));
-    
+
     // Add message to state (for rendering)
     this.addMessage(messages);
   }
@@ -104,13 +118,12 @@ class Homescreen extends React.Component {
     // Access value of quick reply
     var text = data[0].value;
 
-    // Create messages 
+    // Create messages
     var botkitMessage = this.createBotKitMessage(text);
     var message = this.createMessage(text, "user");
 
     websocket.send(JSON.stringify(botkitMessage));
     this.addMessage(message);
-
   };
 
   addServerMessage = message => {
@@ -141,10 +154,10 @@ class Homescreen extends React.Component {
     var message = {
       _id: Math.round(Math.random() * 100000000),
       text: text,
-      createdAt: new Date(),
+      createdAt: new Date()
     };
 
-    switch(type) {
+    switch (type) {
       case "server":
         message.user = this.state.server_user_info;
         break;
@@ -152,15 +165,14 @@ class Homescreen extends React.Component {
         message.user = this.state.user_info;
         break;
       default:
-        message.user = {_id: "unknown"}
+        message.user = { _id: "unknown" };
         break;
     }
 
-    console.log(message)
+    console.log(message);
 
     return message;
   };
-
 
   // Create message template for Botkit message
   createBotKitMessage = text => {
@@ -174,7 +186,7 @@ class Homescreen extends React.Component {
   };
 
   // Add one or multiple messages in gifted chat format to state
-  addMessage = async(messages) => {
+  addMessage = async messages => {
     this.setState(previousState => ({
       messages: GiftedChat.append(previousState.messages, messages)
     }));
@@ -190,18 +202,41 @@ class Homescreen extends React.Component {
     console.log("This is a test!!" + JSON.stringify(data));
   }
 
+  // Render bubble to appear with animation
   renderBubble = props => {
     // Alternative 1: animation="bounceIn" duration={800}
     // Alternative 2: animation="bounceInUp" duration={800}
-    return ( 
-      <Animatable.View animation="fadeInUp" duration={300} iterationDelay={200}> 
-           <Bubble
-                    {...props}
-                />
+    return (
+      <Animatable.View animation="fadeInUp" duration={300} iterationDelay={200}>
+        <Bubble
+          {...props}
+          wrapperStyle={{
+            right: {
+              backgroundColor: "#3966FB"
+            }
+          }}
+        />
       </Animatable.View>
     );
+  };
 
-}
+  // Render send button
+  // TODO: Fix animation
+  // TODO: Create custom send button in GeMuKi color
+  renderSend = props => {
+    return (
+      <Animatable.View animation="fadeIn" duration={300}>
+        <Send {...props}>
+          <View style={{ marginRight: 0, marginBottom: -25 }}>
+            <Image
+              source={require("../assets/send.png")}
+              resizeMode={"center"}
+            />
+          </View>
+        </Send>
+      </Animatable.View>
+    );
+  };
 
   render() {
     return (
@@ -213,10 +248,12 @@ class Homescreen extends React.Component {
         }}
         onQuickReply={data => this.onSendQuickReply(data)}
         renderBubble={this.renderBubble}
+        renderSend={this.renderSend}
+        isAnimated={true}
         placeholder={"Nachricht eingeben..."}
       />
     );
   }
 }
 
-export default Homescreen;
+export default ChatScreen;
