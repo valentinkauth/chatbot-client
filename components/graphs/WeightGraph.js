@@ -21,8 +21,14 @@ class WeightGraph extends Component {
             labels: ["Januar", "Februar", "März", "April", "Mai", "Juni"],
             datasets: [
               {
-                data: [60, 63, 69, 77, 85, 92],
+                data: [60, 63, 69, 77, 85, 92]
               },
+
+              // If problem with disablePoints variable: Go to react-native-chart-kit in node modules and add following code to src/line-chart.js
+              // Disable rendering of data points
+              //   if (dataset.disablePoints) {
+              //     return;
+              //   }
               {
                 data: [50, 60, 70, 80, 90, 100],
                 color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`, // optional
@@ -33,7 +39,9 @@ class WeightGraph extends Component {
           width={Dimensions.get("window").width - 20} // from react-native
           height={220}
           // yAxisLabel={"kg"}
-          onDataPointClick={ (value, dataset, getColor) => {alert(value)}}
+          onDataPointClick={(value, dataset, getColor) => {
+            alert(value);
+          }}
           chartConfig={{
             backgroundColor: "#3966FB",
             backgroundGradientFrom: "#fb8c00",
@@ -53,7 +61,7 @@ class WeightGraph extends Component {
           //bezier
           style={{
             marginVertical: 8,
-            borderRadius: 16,
+            borderRadius: 16
           }}
         />
       </View>
