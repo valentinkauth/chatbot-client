@@ -6,6 +6,13 @@ import LogoTitle from "../components/header/LogoTitle";
 import DataTitle from "../components/header/DataTitle";
 import ProfileTitle from "../components/header/ProfileTitle";
 
+// Push notifications
+import getPushToken from '../helpers/pushNotificationHelper'
+
+// To use local host on external device
+import Constants from "expo-constants";
+const { manifest } = Constants;
+
 class ChatScreen extends React.Component {
   static navigationOptions = ({ navigation }) => {
     return {
@@ -16,8 +23,8 @@ class ChatScreen extends React.Component {
         <DataTitle onPress={() => navigation.navigate("Data")} />
       ),
       headerLeft: () => (
-        <ProfileTitle onPress={() => navigation.navigate("Settings")}/>
-      ),
+        <ProfileTitle onPress={() => navigation.navigate("Settings")} />
+      )
     };
   };
 
@@ -61,7 +68,8 @@ class ChatScreen extends React.Component {
   }
 
   async componentDidMount() {
-    websocket = new WebSocket(this.state.websocket_url);
+    const uri = `ws://${manifest.debuggerHost.split(":").shift()}:3000`;
+    websocket = new WebSocket(uri);
 
     websocket.onopen = async event => {
       console.log("Websocket connection opened" + event);
@@ -73,8 +81,19 @@ class ChatScreen extends React.Component {
         channel: "socket",
         user_profile: this.state.user_id
       };
-
       websocket.send(JSON.stringify(connectMessage));
+
+      // Update push token (not sure if needed on every start)
+
+      let pushToken = await getPushToken();
+      let pushTokenMessage = {
+        type: "push_token",
+        user: this.state.user_id,
+        channel: "socket",
+        user_profile: this.state.user_id,
+        text: pushToken
+      };
+      websocket.send(JSON.stringify(pushTokenMessage));
     };
 
     websocket.onclose = async event => {
@@ -207,7 +226,7 @@ class ChatScreen extends React.Component {
     // Alternative 1: animation="bounceIn" duration={800}
     // Alternative 2: animation="bounceInUp" duration={800}
     return (
-      <Animatable.View animation="fadeInUp" duration={300} iterationDelay={200}>
+      <Animatable.View animation="fadeInUp" duration={300} iterationDelay={0}>
         <Bubble
           {...props}
           wrapperStyle={{
@@ -222,15 +241,25 @@ class ChatScreen extends React.Component {
 
   // Render send button
   // TODO: Fix animation
-  // TODO: Create custom send button in GeMuKi color
   renderSend = props => {
     return (
       <Animatable.View animation="fadeIn" duration={300}>
         <Send {...props}>
-          <View style={{ marginRight: 0, marginBottom: -25 }}>
+          <View
+            style={{
+              marginRight: 10,
+              marginBottom: 1,
+              justifyContent: "center",
+              alignItems: "center"
+            }}
+          >
             <Image
+              style={{
+                width: 40,
+                height: 40,
+                resizeMode: "contain"
+              }}
               source={require("../assets/send.png")}
-              resizeMode={"center"}
             />
           </View>
         </Send>
