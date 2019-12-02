@@ -12,7 +12,7 @@ import {
 class WeightGraph extends Component {
   render() {
     return (
-      <View style={{ alignItems: "center", marginTop: 15 }}>
+      <View style={{ alignItems: "center", marginTop: 50 }}>
         <Text style={{ color: "black", fontWeight: "bold", fontSize: 20 }}>
           Dein Gewichtsverlauf
         </Text>

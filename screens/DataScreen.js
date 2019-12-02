@@ -24,16 +24,24 @@ class DataScreen extends React.Component {
     };
   };
 
+  addWeightButtonPress = () => {
+    console.log(this.props.navigation.state.params)
+    this.props.navigation.state.params.addWeight();
+    this.props.navigation.navigate("Chat");
+  }
+
   render() {
+    console.log(this.props.navigation.state.params)
     return (
       <ScrollView style={{ flex: 1, marginHorizontal: 10 }}>
-        <ProgressBar activeStep={this.state.activeStep}/>
+        <ProgressBar activeStep={this.props.navigation.state.params.activeStep}/>
         <WeightGraph />
         <Button
           title="Neuen Wert hinzufügen"
           type="solid"
           buttonStyle={ {backgroundColor: "#3966FB", borderRadius: 16} }
-          onPress={() => alert('Wert hinzufügen')}
+          onPress={() => this.addWeightButtonPress()
+          }
         />
       </ScrollView>
     );
