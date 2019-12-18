@@ -24,7 +24,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gemuki.chatbot"
+    },
+    "android": {
+      "package": "com.gemuki.chatbot"
     },
     "notification": {
       "icon": "./assets/gemuki_icon_notification.png"

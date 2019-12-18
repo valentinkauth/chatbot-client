@@ -32,22 +32,25 @@ const styles = StyleSheet.create({
 });
 
 class ChatScreen extends React.Component {
-  hello = function() {
-    console.log("Hfjdhfklasdjflösdjafö");
-  };
-
   static navigationOptions = ({ navigation }) => {
     return {
       headerTitle: () => (
-        <LogoTitle onPress={() => alert("Hi, I am the GeMuKi Bot!")} />
+        <LogoTitle
+          onPress={() =>
+            alert(
+              "Hey, ich bin Freya, dein digitaler Assistens und Begleiter während dem Interventionsprogramm GeMuKi"
+            )
+          }
+        />
       ),
       headerRight: () => (
         <DataTitle
           onPress={() =>
             navigation.navigate("Data", {
               addWeight: navigation.state.params.addWeight,
-              weightData: [],
-              activeStep: 2
+              startQuestionnaire: navigation.state.params.startQuestionnaire,
+              weightData: navigation.state.params.weight_measurements,
+              activeStep: navigation.state.params.questionnaire_stage
             })
           }
         />
@@ -56,6 +59,7 @@ class ChatScreen extends React.Component {
         <ProfileTitle
           onPress={() =>
             navigation.navigate("Settings", {
+              userId: navigation.state.params.userId,
               setUserId: navigation.state.params.setUserId,
               removeMessageHistory: navigation.state.params.removeMessageHistory
             })
@@ -66,7 +70,11 @@ class ChatScreen extends React.Component {
   };
 
   // Websocket class instance
-  websocket_uri = `ws://${manifest.debuggerHost.split(":").shift()}:3000`;
+  //websocket_uri = `ws://${manifest.debuggerHost.split(":").shift()}:3000`;
+  websocket_uri = `ws://${manifest.debuggerHost
+    .split(":")
+    .shift()}:7000/chatbot`;
+  //websocket_uri = "wss://gemuki.fokus.fraunhofer.de/chatbot";
 
   constructor(props) {
     super(props);
@@ -74,19 +82,15 @@ class ChatScreen extends React.Component {
     this.state = {
       messages: [],
       connected: false,
-      user_id: "test_user",
-      user_info: {
-        _id: "test_user"
-      },
+      user_id: "",
       server_user_info: {
         _id: 2,
         name: "Chatbot",
         avatar:
           "https://is2-ssl.mzstatic.com/image/thumb/Purple124/v4/2c/59/fe/2c59fe4b-c77d-ba7a-6845-a604ac71d4be/source/512x512bb.jpg"
       },
-      weightData: [],
-      reconnectCounter: 5,
-      test: 3
+      weight_measurements: [],
+      reconnectCounter: 5
     };
 
     this.addServerMessage = this.addServerMessage.bind(this);
@@ -100,21 +104,40 @@ class ChatScreen extends React.Component {
   // Handle storage stuff
   // TODO: Connect to web socket here, send push token and get user data after connect
   async componentWillMount() {
+    // Set navigation parameters (needed for passing function as callback in navigation options)
+    this.props.navigation.setParams({
+      // TODO: Start questionnaire
+      addWeight: this.addWeight,
+      startQuestionnaire: this.startQuestionnaire,
+      removeMessageHistory: this.removeMessageHistory,
+      setUserId: this.setUserId,
+      questionnaire_stage: 0,
+      weight_measurements: []
+    });
+
+    // Get messages and user name from Storage
     var messages = await this.retrieveMessages();
-    // Update messages
-    this.setState({ messages: messages });
+    var userName = await this.retrieveUserName();
+
+    this.setState({ user_id: userName, messages: messages });
+
+    // Go directly to settings screen if no user name was found in storage
+    if (userName == "") {
+      // Nagivate to user data (login) screen
+      this.props.navigation.setParams({
+        userId: ""
+      });
+      this.props.navigation.navigate("Settings");
+    } else {
+      this.props.navigation.setParams({
+        userId: userName
+      });
+    }
   }
 
   async componentDidMount() {
     // Start websocket connection
     this.connectWebSocket();
-
-    // Set navigation parameters (needed for passing function as callback in navigation options)
-    this.props.navigation.setParams({
-      addWeight: this.addWeight,
-      removeMessageHistory: this.removeMessageHistory,
-      setUserId: this.setUserId
-    });
   }
 
   async componentDidUpdate() {
@@ -162,12 +185,39 @@ class ChatScreen extends React.Component {
     return JSON.parse(messages);
   };
 
+  // Store user name in local storage
+  storeUserName = async userName => {
+    try {
+      await AsyncStorage.setItem("chatbot_user_name", userName);
+      console.log("Stored new user name: " + userName);
+    } catch (error) {
+      console.log("Error storing user name");
+    }
+  };
+
+  // Retrieve user name from local storage
+  retrieveUserName = async () => {
+    try {
+      const userName = await AsyncStorage.getItem("chatbot_user_name");
+      if (userName !== null) {
+        // We have data!!
+        // return userName;
+        return userName;
+      }
+    } catch (error) {
+      console.log("Error retrieving user name");
+    }
+    return "";
+  };
+
   // HELPER METHODS
   //_________________________
 
-  connectWebSocket = () => {
+  connectWebSocket = newConversation => {
+    // Create web socket instance
     this.websocket = new WebSocket(this.websocket_uri);
 
+    // Handle openend connection
     this.websocket.onopen = async event => {
       console.log("Websocket connection opened");
 
@@ -177,15 +227,37 @@ class ChatScreen extends React.Component {
       // Update connection state
       this.setState({ connected: true });
 
-      // Update push token (not sure if needed on every start)
+      // Get current push token for device
       let pushToken = await getPushToken();
 
+      var startNewConversation = false;
+
+      if (newConversation) {
+        startNewConversation = true;
+      } else {
+        // Get last conversation date
+        let lastInteractionDate =
+          (await AsyncStorage.getItem("chatbot_last_interaction")) ||
+          new Date().toString();
+        lastInteractionDate = new Date(lastInteractionDate);
+        let currentDate = new Date();
+        let dateDifference = currentDate - lastInteractionDate;
+        let dateDifferenceMinutes = Math.floor(dateDifference / 1000 / 60);
+        // Return true if difference between current moment and last interaction is more than 20 minutes
+        startNewConversation = dateDifferenceMinutes > 20 ? true : false;
+      }
+
+      console.log(
+        "Start message to server with user name " + this.state.user_id
+      );
+
+      console.log("starting new conversation: " + startNewConversation);
+
       // Initial message to server
-      // TODO: change new_conversation field depending on passed time since last connect
       let connectMessage = {
         type: "start",
         push_token: pushToken,
-        new_conversation: true,
+        new_conversation: startNewConversation,
         user: this.state.user_id,
         channel: "socket",
         user_profile: this.state.user_id
@@ -235,6 +307,26 @@ class ChatScreen extends React.Component {
         // TODO: Switch message type
         if (message["type"] == "message") {
           this.addServerMessage(message);
+        } else if (message["type"] == "user_data") {
+          console.log("Received user data");
+          if ("weight_measurements" in message) {
+            console.log("Received weight measurements");
+            this.setState({
+              weight_measurements: message["weight_measurements"]
+            });
+            this.props.navigation.setParams({
+              weight_measurements: message["weight_measurements"]
+            });
+          }
+          if ("questionnaire_stage" in message) {
+            console.log("Received questionnaire stage");
+            this.setState({
+              questionnaire_stage: message["questionnaire_stage"]
+            });
+            this.props.navigation.setParams({
+              questionnaire_stage: message["questionnaire_stage"]
+            });
+          }
         }
       } catch (err) {
         console.log(err);
@@ -304,7 +396,9 @@ class ChatScreen extends React.Component {
         message.user = this.state.server_user_info;
         break;
       case "user":
-        message.user = this.state.user_info;
+        message.user = {
+          _id: this.state.user_id
+        };
         break;
       default:
         message.user = { _id: "unknown" };
@@ -332,7 +426,13 @@ class ChatScreen extends React.Component {
       previousState => ({
         messages: GiftedChat.append(previousState.messages, messages)
       }),
-      () => this.storeMessages(this.state.messages)
+      async () => {
+        // Store updated messages in local storage
+        await this.storeMessages(this.state.messages);
+        // Update time of last interaction
+        let date = new Date();
+        await AsyncStorage.setItem("chatbot_last_interaction", date.toString());
+      }
     );
   };
 
@@ -347,15 +447,29 @@ class ChatScreen extends React.Component {
     }
   };
 
+  // Send event to server to start weight measurement dialog
+  startQuestionnaire = () => {
+    var event = this.createBotkitEvent("", "questionnaire");
+    if (this.state.connected) {
+      this.websocket.send(JSON.stringify(event));
+    }
+  };
+
   // Set new user name and reconnect
   setUserId = userId => {
     this.setState({ user_id: userId }, () => {
-      this.connectWebSocket();
+      this.storeUserName(userId);
+      this.setState({ user_name: userId });
+      this.props.navigation.setParams({
+        userId: userId
+      });
+      this.connectWebSocket(true);
     });
   };
 
   // Set empty messages array in state and store empty array in storage
   removeMessageHistory = () => {
+    console.log("Removing message history");
     this.setState({ messages: [] }, () => {
       this.storeMessages(this.state.messages);
     });
@@ -465,6 +579,9 @@ class ChatScreen extends React.Component {
   };
 
   render() {
+
+    //console.log(this.state.user_id)
+
     return (
       <GiftedChat
         messages={this.state.messages}

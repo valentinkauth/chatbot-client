@@ -10,7 +10,29 @@ import {
 } from "react-native-chart-kit";
 
 class WeightGraph extends Component {
+
+
+  getLabelsArray = (weightMeasurements) => {
+    var labels = [];
+    for (measurement of weightMeasurements) {
+      labels.push("")
+    }
+    return labels;
+  }
+
+  getDataArray = (weightMeasurements) => {
+    var data = [];
+    for (measurement of weightMeasurements) {
+      data.push(measurement.weight)
+    }
+    return data;
+  }
+
+
+
   render() {
+
+    console.log(this.props.weightData)
     return (
       <View style={{ alignItems: "center", marginTop: 50 }}>
         <Text style={{ color: "black", fontWeight: "bold", fontSize: 20 }}>
@@ -18,10 +40,10 @@ class WeightGraph extends Component {
         </Text>
         <LineChart
           data={{
-            labels: ["Januar", "Februar", "März", "April", "Mai", "Juni"],
+            labels: this.getLabelsArray(this.props.weightData),
             datasets: [
               {
-                data: [60, 63, 69, 77, 85, 92]
+                data: this.getDataArray(this.props.weightData)
               },
 
               // If problem with disablePoints variable: Go to react-native-chart-kit in node modules and add following code to src/line-chart.js
@@ -29,16 +51,17 @@ class WeightGraph extends Component {
               //   if (dataset.disablePoints) {
               //     return;
               //   }
-              {
-                data: [50, 60, 70, 80, 90, 100],
-                color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`, // optional
-                disablePoints: true
-              }
+              // {
+              //   data: [50, 60, 70, 80, 90, 100],
+              //   color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`, // optional
+              //   disablePoints: true
+              // }
             ]
           }}
-          width={Dimensions.get("window").width - 20} // from react-native
+          width={Dimensions.get("window").width} // from react-native
           height={220}
           // yAxisLabel={"kg"}
+          yAxisSuffix={" kg"}
           onDataPointClick={(value, dataset, getColor) => {
             alert(value);
           }}
