@@ -13,6 +13,9 @@ import LogoTitle from "../components/header/LogoTitle";
 import DataTitle from "../components/header/DataTitle";
 import ProfileTitle from "../components/header/ProfileTitle";
 
+// Chatbot icon
+import botIcon from '../assets/bot_icon_new.png';
+
 // Push notifications
 import getPushToken from "../helpers/pushNotificationHelper";
 
@@ -87,7 +90,7 @@ class ChatScreen extends React.Component {
         _id: 2,
         name: "Chatbot",
         avatar:
-          "https://is2-ssl.mzstatic.com/image/thumb/Purple124/v4/2c/59/fe/2c59fe4b-c77d-ba7a-6845-a604ac71d4be/source/512x512bb.jpg"
+          botIcon
       },
       weight_measurements: [],
       reconnectCounter: 5
@@ -579,9 +582,6 @@ class ChatScreen extends React.Component {
   };
 
   render() {
-
-    //console.log(this.state.user_id)
-
     return (
       <GiftedChat
         messages={this.state.messages}

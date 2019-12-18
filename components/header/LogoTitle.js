@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Image, TouchableOpacity } from "react-native";
-import botIcon from '../../assets/bot_icon.png';
+import botIcon from '../../assets/bot_icon_new.png';
 
 class LogoTitle extends Component {
   render() {
@@ -8,7 +8,7 @@ class LogoTitle extends Component {
       <TouchableOpacity onPress={this.props.onPress}>
         <Image
           source={botIcon}
-          style={{ width: 50, height: 50, marginBottom: 5 }}
+          style={{ width: 40, height: 40, marginBottom: 5 }}
           resizeMode="contain"
         />
       </TouchableOpacity>
