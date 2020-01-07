@@ -14,19 +14,21 @@ class SettingsScreen extends React.Component {
     };
   };
 
-  async componentWillMount() {
-    // Get current user name
-    this.setState({ userName: this.props.navigation.state.params.userId });
-  }
-
+ 
   render() {
     return (
       <View style={{ alignItems: "center", justifyContent: "center" }}>
         <Input
           placeholder="Bitte User Name eingeben (z.B. test_user)"
-          value={this.state.userName}
+          value={this.props.navigation.state.params.userId}
+          //value={"Hello"}
           onChangeText={input => {
-            this.setState({ userName: input });
+            if (input == null) {
+              input = "";
+            }
+            this.props.navigation.setParams({
+              userId: input
+            });
           }}
         />
         <Button
@@ -39,7 +41,7 @@ class SettingsScreen extends React.Component {
             marginTop: 20
           }}
           onPress={() => {
-            this.props.navigation.state.params.setUserId(this.state.userName);
+            this.props.navigation.state.params.setUserId(this.props.navigation.state.params.userId);
             this.props.navigation.navigate("Chat");
           }}
         />

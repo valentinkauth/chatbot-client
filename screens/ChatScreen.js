@@ -5,7 +5,8 @@ import {
   View,
   Text,
   Image,
-  Button
+  Button,
+  Alert
 } from "react-native";
 import { GiftedChat, Bubble, Send } from "react-native-gifted-chat";
 import * as Animatable from "react-native-animatable";
@@ -14,7 +15,7 @@ import DataTitle from "../components/header/DataTitle";
 import ProfileTitle from "../components/header/ProfileTitle";
 
 // Chatbot icon
-import botIcon from '../assets/bot_icon_new.png';
+import botIcon from "../assets/bot_icon_new.png";
 
 // Push notifications
 import getPushToken from "../helpers/pushNotificationHelper";
@@ -40,33 +41,29 @@ class ChatScreen extends React.Component {
       headerTitle: () => (
         <LogoTitle
           onPress={() =>
-            alert(
-              "Hey, ich bin Freya, dein digitaler Assistens und Begleiter während dem Interventionsprogramm GeMuKi"
+            Alert.alert(
+              "Hallo :)",
+              "Ich bin Freya, dein digitaler Assistenst und Begleiter während dem Interventionsprogramm GeMuKi",
+              [
+                {
+                  text: "Hallo Freya!",
+                  style: "cancel"
+                }
+              ],
+              { cancelable: false }
             )
           }
         />
       ),
       headerRight: () => (
         <DataTitle
-          onPress={() =>
-            navigation.navigate("Data", {
-              addWeight: navigation.state.params.addWeight,
-              startQuestionnaire: navigation.state.params.startQuestionnaire,
-              weightData: navigation.state.params.weight_measurements,
-              activeStep: navigation.state.params.questionnaire_stage
-            })
-          }
+          enabled={true}
+          onPress={() => navigation.state.params.navigateToDataScreen()}
         />
       ),
       headerLeft: () => (
         <ProfileTitle
-          onPress={() =>
-            navigation.navigate("Settings", {
-              userId: navigation.state.params.userId,
-              setUserId: navigation.state.params.setUserId,
-              removeMessageHistory: navigation.state.params.removeMessageHistory
-            })
-          }
+          onPress={() => navigation.state.params.navigateToSettingsScreen()}
         />
       )
     };
@@ -74,10 +71,10 @@ class ChatScreen extends React.Component {
 
   // Websocket class instance
   //websocket_uri = `ws://${manifest.debuggerHost.split(":").shift()}:3000`;
-  websocket_uri = `ws://${manifest.debuggerHost
-    .split(":")
-    .shift()}:7000/chatbot`;
-  //websocket_uri = "wss://gemuki.fokus.fraunhofer.de/chatbot";
+  // websocket_uri = `ws://${manifest.debuggerHost
+  //   .split(":")
+  //   .shift()}:7000/chatbot`;
+  websocket_uri = "wss://gemuki.fokus.fraunhofer.de/chatbot";
 
   constructor(props) {
     super(props);
@@ -85,12 +82,12 @@ class ChatScreen extends React.Component {
     this.state = {
       messages: [],
       connected: false,
+      received_user_data: false,
       user_id: "",
       server_user_info: {
         _id: 2,
         name: "Chatbot",
-        avatar:
-          botIcon
+        avatar: botIcon
       },
       weight_measurements: [],
       reconnectCounter: 5
@@ -108,6 +105,9 @@ class ChatScreen extends React.Component {
   // TODO: Connect to web socket here, send push token and get user data after connect
   async componentWillMount() {
     // Set navigation parameters (needed for passing function as callback in navigation options)
+
+    //await AsyncStorage.clear()
+
     this.props.navigation.setParams({
       // TODO: Start questionnaire
       addWeight: this.addWeight,
@@ -115,7 +115,10 @@ class ChatScreen extends React.Component {
       removeMessageHistory: this.removeMessageHistory,
       setUserId: this.setUserId,
       questionnaire_stage: 0,
-      weight_measurements: []
+      weight_measurements: [],
+      received_user_data: false,
+      navigateToSettingsScreen: this.navigateToSettingsScreen,
+      navigateToDataScreen: this.navigateToDataScreen
     });
 
     // Get messages and user name from Storage
@@ -130,7 +133,8 @@ class ChatScreen extends React.Component {
       this.props.navigation.setParams({
         userId: ""
       });
-      this.props.navigation.navigate("Settings");
+      //this.props.navigation.navigate("Settings");
+      this.sendNoUserAlert("Herzlich Willkommen!");
     } else {
       this.props.navigation.setParams({
         userId: userName
@@ -281,6 +285,9 @@ class ChatScreen extends React.Component {
       console.log("Websocket connection closed" + event);
 
       this.setState({ connected: false });
+      this.props.navigation.setParams({
+        received_user_data: false
+      });
       this.setState(prevState => ({ reconnectCounter: 5 }));
 
       // clear old interval
@@ -312,6 +319,9 @@ class ChatScreen extends React.Component {
           this.addServerMessage(message);
         } else if (message["type"] == "user_data") {
           console.log("Received user data");
+          this.props.navigation.setParams({
+            received_user_data: true
+          });
           if ("weight_measurements" in message) {
             console.log("Received weight measurements");
             this.setState({
@@ -439,6 +449,33 @@ class ChatScreen extends React.Component {
     );
   };
 
+  // NAVIGATION HELPER METHODS
+  //_________________________
+
+  // Navigate to data screen if state is connected
+  navigateToDataScreen = () => {
+    if (this.state.connected) {
+      this.props.navigation.navigate("Data", {
+        addWeight: this.props.navigation.state.params.addWeight,
+        startQuestionnaire: this.props.navigation.state.params
+          .startQuestionnaire,
+        weightData: this.props.navigation.state.params.weight_measurements,
+        activeStep: this.props.navigation.state.params.questionnaire_stage
+      });
+    } else {
+      this.sendNoUserAlert("Login-Fehler");
+    }
+  };
+
+  navigateToSettingsScreen = () => {
+    this.props.navigation.navigate("Settings", {
+      userId: this.props.navigation.state.params.userId,
+      setUserId: this.props.navigation.state.params.setUserId,
+      removeMessageHistory: this.props.navigation.state.params
+        .removeMessageHistory
+    });
+  };
+
   // CALLBACK METHODS
   //_________________________
 
@@ -476,6 +513,25 @@ class ChatScreen extends React.Component {
     this.setState({ messages: [] }, () => {
       this.storeMessages(this.state.messages);
     });
+  };
+
+  sendNoUserAlert = alertTitle => {
+    Alert.alert(
+      alertTitle,
+      "Es scheint, als hast du noch keinen gültigen Nutzernamen hinterlegt. Bitte gehe in deine Profil-Einstellungen und gebe deinen Nutzernamen ein.",
+      [
+        {
+          text: "Abbrechen",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel"
+        },
+        {
+          text: "Profil-Einstellungen",
+          onPress: () => this.navigateToSettingsScreen()
+        }
+      ],
+      { cancelable: false }
+    );
   };
 
   // RENDER METHODS
@@ -583,20 +639,22 @@ class ChatScreen extends React.Component {
 
   render() {
     return (
-      <GiftedChat
-        messages={this.state.messages}
-        onSend={messages => this.onSend(messages)}
-        onQuickReply={data => this.onSendQuickReply(data)}
-        user={{
-          _id: this.state.user_id
-        }}
-        renderBubble={this.renderBubble}
-        renderSend={this.renderSend}
-        //renderQuickReplies={this.renderQuickReplies}
-        renderChatFooter={this.renderFooter}
-        isAnimated={true}
-        placeholder={"Nachricht eingeben..."}
-      />
+      <View style={{ flex: 1 }}>
+        <GiftedChat
+          messages={this.state.messages}
+          onSend={messages => this.onSend(messages)}
+          onQuickReply={data => this.onSendQuickReply(data)}
+          user={{
+            _id: this.state.user_id
+          }}
+          renderBubble={this.renderBubble}
+          renderSend={this.renderSend}
+          //renderQuickReplies={this.renderQuickReplies}
+          renderChatFooter={this.renderFooter}
+          isAnimated={true}
+          placeholder={"Nachricht eingeben..."}
+        />
+      </View>
     );
   }
 }

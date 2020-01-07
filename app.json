@@ -1,20 +1,19 @@
 {
   "expo": {
-    "name": "GeMuKi-Chatbot",
-    "slug": "chatbot-client",
+    "name": "Freya",
+    "slug": "gemuki-chatbot-client",
     "privacy": "public",
     "sdkVersion": "35.0.0",
     "platforms": [
       "ios",
-      "android",
-      "web"
+      "android"
     ],
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/gemuki_icon.png",
+    "icon": "./assets/icon_freya.png",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "updates": {
@@ -25,13 +24,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gemuki.chatbot"
+      "bundleIdentifier": "com.gemuki.freya"
     },
     "android": {
       "package": "com.gemuki.chatbot"
     },
     "notification": {
       "icon": "./assets/gemuki_icon_notification.png"
-    }
+    },
+    "description": ""
   }
 }
