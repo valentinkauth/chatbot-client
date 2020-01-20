@@ -5,8 +5,9 @@ import {
   View,
   Text,
   Image,
-  Button,
-  Alert
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView
 } from "react-native";
 import { GiftedChat, Bubble, Send } from "react-native-gifted-chat";
 import * as Animatable from "react-native-animatable";
@@ -69,12 +70,11 @@ class ChatScreen extends React.Component {
     };
   };
 
-  // Websocket class instance
-  //websocket_uri = `ws://${manifest.debuggerHost.split(":").shift()}:3000`;
-  // websocket_uri = `ws://${manifest.debuggerHost
-  //   .split(":")
-  //   .shift()}:7000/chatbot`;
+  
+  // Websocket URI of GeMuKi server
   websocket_uri = "wss://gemuki.fokus.fraunhofer.de/chatbot";
+  // Websocket URI if server runs locally
+  websocket_uri = `ws://${manifest.debuggerHost.split(":").shift()}:7000`;
 
   constructor(props) {
     super(props);
@@ -106,10 +106,10 @@ class ChatScreen extends React.Component {
   async componentWillMount() {
     // Set navigation parameters (needed for passing function as callback in navigation options)
 
+    // Command to clear local storage before every start
     //await AsyncStorage.clear()
 
     this.props.navigation.setParams({
-      // TODO: Start questionnaire
       addWeight: this.addWeight,
       startQuestionnaire: this.startQuestionnaire,
       removeMessageHistory: this.removeMessageHistory,
@@ -390,6 +390,10 @@ class ChatScreen extends React.Component {
             value: quickReply.payload
           });
         }
+
+        // Disable keyboard if quick replies in message (cause user should click on quick reply)
+        Keyboard.dismiss()
+
       }
 
       this.addMessage(newMessage);
@@ -653,6 +657,11 @@ class ChatScreen extends React.Component {
           renderChatFooter={this.renderFooter}
           isAnimated={true}
           placeholder={"Nachricht eingeben..."}
+          keyboardShouldPersistTaps={'handled'}
+        />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "android" ? "padding" : null}
+          keyboardVerticalOffset={80}
         />
       </View>
     );

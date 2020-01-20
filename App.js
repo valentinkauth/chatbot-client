@@ -18,6 +18,7 @@ const AppNavigator = createStackNavigator(
   },
   {
     initialRouteName: 'Chat',
+    headerLayoutPreset: 'center',
     defaultNavigationOptions: {
       headerStyle: {
         backgroundColor: "#3966FB"

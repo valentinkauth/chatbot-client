@@ -58,12 +58,12 @@ class WeightGraph extends Component {
               // }
             ]
           }}
-          width={Dimensions.get("window").width} // from react-native
+          width={Dimensions.get("window").width - 16} // from react-native
           height={220}
           // yAxisLabel={"kg"}
           yAxisSuffix={" kg"}
           onDataPointClick={(value, dataset, getColor) => {
-            alert(value);
+            alert("Gewicht: " + value.value + " kg");
           }}
           chartConfig={{
             backgroundColor: "#3966FB",
